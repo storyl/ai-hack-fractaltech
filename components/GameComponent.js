@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { AiFillMuted } from "react-icons/ai";
+import { AiFillSound } from "react-icons/ai";
+
 
 const stages = [
   "Inception: Your 'groundbreaking' idea",
@@ -18,6 +21,27 @@ export default function GameComponent() {
     "Welcome to 'Startup Hell: Where Dreams Go to Die'! Ready to lose your sanity and maybe make a quick buck? Let's dive in!\n\nYou're sitting in your parents' basement, thinking you're the next Steve Jobs. What's your 'revolutionary' idea?"
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechSynthesisRef = useRef(null);
+
+  useEffect(() => {
+    speechSynthesisRef.current = window.speechSynthesis;
+    return () => {
+      if (speechSynthesisRef.current) {
+        speechSynthesisRef.current.cancel();
+      }
+    };
+  }, []);
+
+  const speakText = (text) => {
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.onend = () => setIsSpeaking(false);
+      setIsSpeaking(true);
+      speechSynthesisRef.current.speak(utterance);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +52,7 @@ export default function GameComponent() {
       Previous game text: ${gameText}
       Player input: ${input}
       Respond with a humorous, slightly toxic continuation of the story based on the player's input.
-      Keep it under 150 words. Don't use quotation marks in your response.
+      Keep it around 150 words. Don't use quotation marks in your response.
     `;
 
     try {
@@ -38,17 +62,23 @@ export default function GameComponent() {
         body: JSON.stringify({ input, context })
       });
       const data = await response.json();
-      setGameText(data.text);
+      const newText = data.text;
+      setGameText(prevText => prevText + "\n\n" + newText);
       setInput('');
-      
+      speakText(newText);
+
       if (currentStage < stages.length - 1) {
         setCurrentStage(currentStage + 1);
       } else {
-        setGameText(data.text + "\n\nCongratulations, you've somehow made it to the end without going bankrupt or ending up in jail. Time to cash out and do it all over again!");
+        const finalText = "\n\nCongratulations, you've somehow made it to the end without going bankrupt or ending up in jail. Time to cash out and do it all over again!";
+        setGameText(prevText => prevText + finalText);
+        speakText(finalText);
       }
     } catch (error) {
       console.error('Error:', error);
-      setGameText("Oops! Looks like our AI is as reliable as your startup's revenue projections. Try again, hotshot!");
+      const errorText = "Oops! Looks like our AI is as reliable as your startup's revenue projections. Try again, hotshot!";
+      setGameText(prevText => prevText + "\n\n" + errorText);
+      speakText(errorText);
     }
 
     setIsLoading(false);
@@ -56,7 +86,7 @@ export default function GameComponent() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <h1 className="text-4xl font-extrabold mb-6 text-center">Startup Hell: Where Dreams Go to Die</h1>
+      <h1 className="text-[28px] font-extrabold mb-6 text-center">🌈 The Startup Journey: From Vision to Reality 🦄</h1>
       <p className="text-xl mb-4">{stages[currentStage]}</p>
       <div className="bg-gray-100 border p-4 rounded-lg mb-4 h-64 overflow-y-auto">
         <p className="whitespace-pre-wrap">{gameText}</p>
@@ -78,6 +108,13 @@ export default function GameComponent() {
           {isLoading ? 'Processing...' : 'Make Your Move'}
         </button>
       </form>
+      <button
+        onClick={() => speakText(gameText)}
+        className="mt-4 w-full px-4 py-2 text-white text-center flex flex-row items-center justify-center bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+        disabled={isSpeaking}
+      >
+        {isSpeaking ? <AiFillSound /> : <span className='flex flex-row items-center space-x-1'><span>Play Audio:</span> <AiFillMuted /></span> }
+      </button>
     </div>
   );
 }
