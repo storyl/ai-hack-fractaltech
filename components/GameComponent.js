@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { AiFillMuted } from "react-icons/ai";
-import { AiFillSound } from "react-icons/ai";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { AiFillMuted, AiFillSound } from "react-icons/ai";
+import { createClient } from '@supabase/supabase-js';
 
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const stages = [
   "Inception: Your 'groundbreaking' idea",
@@ -14,24 +15,67 @@ const stages = [
   "Launch: Praying your house of cards doesn't collapse"
 ];
 
-export default function GameComponent() {
+export default function GameComponent({ sessionId }) {
   const [currentStage, setCurrentStage] = useState(0);
   const [input, setInput] = useState('');
-  const [gameText, setGameText] = useState(
-    "Welcome to 'Startup Hell: Where Dreams Go to Die'! Ready to lose your sanity and maybe make a quick buck? Let's dive in!\n\nYou're sitting in your parents' basement, thinking you're the next Steve Jobs. What's your 'revolutionary' idea?"
-  );
-  const [isLoading, setIsLoading] = useState(false);
+  const [latestResponse, setLatestResponse] = useState('');
+  const [fullGameText, setFullGameText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessingMove, setIsProcessingMove] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const speechSynthesisRef = useRef(null);
 
+  const loadGameState = useCallback(async () => {
+    if (!sessionId) return;
+
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select('*')
+      .eq('id', sessionId)
+      .single();
+
+    if (error) {
+      console.error('Error loading game state:', error);
+      return;
+    }
+
+    if (data) {
+      setCurrentStage(data.current_stage || 0);
+      setFullGameText(data.game_text || '');
+      // Set the latest response to the last part of the full game text
+      const parts = data.game_text.split('\n\n');
+      setLatestResponse(parts[parts.length - 1] || '');
+    }
+    setIsLoading(false);
+  }, [sessionId]);
+
   useEffect(() => {
     speechSynthesisRef.current = window.speechSynthesis;
+    loadGameState();
+
     return () => {
       if (speechSynthesisRef.current) {
         speechSynthesisRef.current.cancel();
       }
     };
-  }, []);
+  }, [loadGameState]);
+
+  const saveGameState = async () => {
+    if (!sessionId) return;
+
+    const { error } = await supabase
+      .from('game_sessions')
+      .upsert({
+        id: sessionId,
+        current_stage: currentStage,
+        game_text: fullGameText,
+        updated_at: new Date()
+      });
+
+    if (error) {
+      console.error('Error saving game state:', error);
+    }
+  };
 
   const speakText = (text) => {
     if (speechSynthesisRef.current) {
@@ -45,11 +89,11 @@ export default function GameComponent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsProcessingMove(true);
 
     const context = `
       The player is in the "${stages[currentStage]}" stage of their startup journey.
-      Previous game text: ${gameText}
+      Previous game text: ${fullGameText}
       Player input: ${input}
       Respond with a humorous, slightly toxic continuation of the story based on the player's input.
       Keep it around 150 or less words. Don't use quotation marks in your response.
@@ -63,33 +107,42 @@ export default function GameComponent() {
       });
       const data = await response.json();
       const newText = data.text;
-      setGameText(prevText => prevText + "\n\n" + newText);
+      setLatestResponse(newText);
+      setFullGameText(prevText => prevText + "\n\n" + newText);
       setInput('');
       speakText(newText);
 
       if (currentStage < stages.length - 1) {
-        setCurrentStage(currentStage + 1);
+        setCurrentStage(prevStage => prevStage + 1);
       } else {
         const finalText = "\n\nCongratulations, you've somehow made it to the end without going bankrupt or ending up in jail. Time to cash out and do it all over again!";
-        setGameText(prevText => prevText + finalText);
+        setLatestResponse(finalText);
+        setFullGameText(prevText => prevText + finalText);
         speakText(finalText);
       }
+
+      await saveGameState();
     } catch (error) {
       console.error('Error:', error);
       const errorText = "Oops! Looks like our AI is as reliable as your startup's revenue projections. Try again, hotshot!";
-      setGameText(prevText => prevText + "\n\n" + errorText);
+      setLatestResponse(errorText);
+      setFullGameText(prevText => prevText + "\n\n" + errorText);
       speakText(errorText);
+    } finally {
+      setIsProcessingMove(false);
     }
-
-    setIsLoading(false);
   };
 
+  if (isLoading) {
+    return <div>Loading game...</div>;
+  }
+
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <h1 className="text-[28px] font-extrabold mb-6 text-center">🌈 The Startup Journey: From Vision to Reality 🦄</h1>
-      <p className="text-xl mb-4">{stages[currentStage]}</p>
+    <div className="w-full max-w-2xl mx-auto p-4">
+      <h1 className="text-4xl font-extrabold mb-6 text-center">🌈 The Startup Journey <br/> From Vision to Reality 🦄</h1>
+      <p className="text-xl mb-4 font-bold">{stages[currentStage]}</p>
       <div className="bg-gray-100 border p-4 rounded-lg mb-4 h-64 overflow-y-auto">
-        <p className="whitespace-pre-wrap">{gameText}</p>
+        <p className="whitespace-pre-wrap">{latestResponse}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -98,22 +151,22 @@ export default function GameComponent() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="What's your next brilliant move, genius?"
           className="w-full border px-3 py-2 text-gray-700 bg-gray-100 rounded focus:outline-none focus:bg-white"
-          disabled={isLoading}
+          disabled={isProcessingMove}
         />
         <button
           type="submit"
           className="w-full px-4 py-2 text-white bg-black hover:bg-black/80 transition-all duration-200 rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
-          disabled={isLoading}
+          disabled={isProcessingMove}
         >
-          {isLoading ? 'Processing...' : 'Make Your Move'}
+          {isProcessingMove ? 'Processing move...' : 'Make Your Move'}
         </button>
       </form>
       <button
-        onClick={() => speakText(gameText)}
+        onClick={() => speakText(latestResponse)}
         className="mt-4 w-full px-4 py-2 text-black text-center flex flex-row items-center justify-center rounded"
         disabled={isSpeaking}
       >
-        {isSpeaking ? <AiFillSound size={24} /> : <span className='flex flex-row items-center space-x-1'><span>Play Audio:</span> <AiFillMuted size={24} /></span> }
+        {isSpeaking ? <AiFillSound size={24} /> : <span className='flex flex-row items-center space-x-1'><span>Play Audio:</span> <AiFillMuted size={24} /></span>}
       </button>
     </div>
   );
