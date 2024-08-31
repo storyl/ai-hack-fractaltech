@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import GameComponent from './GameComponent';
+import { useRouter } from 'next/navigation';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,6 +17,7 @@ export default function LobbyComponent() {
   const [error, setError] = useState(null);
   const [inputSessionId, setInputSessionId] = useState('');
   const [showGame, setShowGame] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (gameSessionId) {
@@ -47,7 +49,9 @@ export default function LobbyComponent() {
       console.log('New game created with session ID:', newSessionId);
       setGameSessionId(newSessionId);
       localStorage.setItem('gameSessionId', newSessionId);
-      setShowGame(true);
+      router.push(`/world/${newSessionId}`);
+
+    //   setShowGame(true);
     } catch (error) {
       console.error('Error creating new game:', error);
       setError('Failed to create a new game. Please try again.');

@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-export default function WorldBuilder() {
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+export default function Page({ world }) {
   const [isLoading, setIsLoading] = useState(false);
   const [megacorps, setMegacorps] = useState([]);
   const [vcFunds, setVcFunds] = useState([]);
@@ -10,12 +13,11 @@ export default function WorldBuilder() {
   const [town, setTown] = useState({});
 
   const generateWorld = async (e) => {
-    // e.preventDefault();
     setIsLoading(true);
 
     try {
       const response = await fetch('/api/world', {
-        method: 'GET',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
@@ -29,6 +31,23 @@ export default function WorldBuilder() {
     }
     setIsLoading(false);
   };
+
+  const saveAndContinue = async (e) => {
+    const gameSessionId = localStorage.getItem('gameSessionId');
+    if (!gameSessionId) {
+      console.error('No game session ID found.');
+      return;
+    }
+    const { data, error } = await supabase
+        .from('game_sessions')
+        .update({ technews: techNews, megacorps: megacorps, vc_funds: vcFunds, town: town })
+        .eq('id', gameSessionId);
+    if (error) {
+        console.error('Error saving game state:', error);
+    } else {
+        console.log('Game state saved.');
+    }
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -46,19 +65,19 @@ export default function WorldBuilder() {
               <h3 className="text-xl font-bold mb-2">Megacorps</h3>
               <ul className="mb-4">
                 {megacorps.map((corp, index) => (
-                  <li class="mb-2" key={index}>{corp.name}: {corp.description}</li>
+                  <li className="mb-2" key={index}>{corp.name}: {corp.description}</li>
                 ))}
               </ul>
               <h3 className="text-xl font-bold mb-2">VC Funds</h3>
               <ul className="mb-4">
                 {vcFunds.map((fund, index) => (
-                  <li class="mb-2" key={index}>{fund.name}: {fund.description}</li>
+                  <li className="mb-2" key={index}>{fund.name}: {fund.description}</li>
                 ))}
               </ul>
               <h3 className="text-xl font-bold mb-2">Tech News</h3>
               <ul className="mb-4">
                 {techNews.map((news, index) => (
-                  <li class="mb-2" key={index}>{news.name}: {news.description}</li>
+                  <li className="mb-2" key={index}>{news.name}: {news.description}</li>
                 ))}
               </ul>
             </div>
@@ -73,9 +92,12 @@ export default function WorldBuilder() {
           Create New World
         </button>
         {(() => {
-          if (town) {
+          if (town != {}) {
             return (
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              <button 
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                onClick={() => saveAndContinue()}
+                >
                 Play Game
               </button>
             );
