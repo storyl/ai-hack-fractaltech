@@ -58,7 +58,7 @@ export default function GameComponent() {
     <div className="w-full max-w-2xl mx-auto">
       <h1 className="text-4xl font-extrabold mb-6 text-center">Startup Hell: Where Dreams Go to Die</h1>
       <p className="text-xl mb-4">{stages[currentStage]}</p>
-      <div className="bg-gray-100 p-4 rounded-lg mb-4 h-64 overflow-y-auto">
+      <div className="bg-gray-100 border p-4 rounded-lg mb-4 h-64 overflow-y-auto">
         <p className="whitespace-pre-wrap">{gameText}</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -67,12 +67,12 @@ export default function GameComponent() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What's your next brilliant move, genius?"
-          className="w-full px-3 py-2 text-gray-700 bg-gray-100 rounded focus:outline-none focus:bg-white"
+          className="w-full border px-3 py-2 text-gray-700 bg-gray-100 rounded focus:outline-none focus:bg-white"
           disabled={isLoading}
         />
         <button
           type="submit"
-          className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="w-full px-4 py-2 text-white bg-black hover:bg-black/80 transition-all duration-200 rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
           disabled={isLoading}
         >
           {isLoading ? 'Processing...' : 'Make Your Move'}
