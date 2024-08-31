@@ -14,6 +14,7 @@ export default function LobbyComponent() {
   const [gameSessionId, setGameSessionId] = useState(null);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [isResumingGame, setIsResumingGame] = useState(false);
+  const [username, setUsername] = useState('');
   const [error, setError] = useState(null);
   const [inputSessionId, setInputSessionId] = useState('');
   const [showGame, setShowGame] = useState(false);
@@ -81,7 +82,8 @@ export default function LobbyComponent() {
       console.log('Game resumed with session ID:', inputSessionId);
       setGameSessionId(inputSessionId);
       localStorage.setItem('gameSessionId', inputSessionId);
-      setShowGame(true);
+      router.push(`/world/${inputSessionId}`);
+    //   setShowGame(true);
     } catch (error) {
       console.error('Error loading game:', error);
       setError('Failed to load the game. Please check the session ID and try again.');
@@ -94,13 +96,31 @@ export default function LobbyComponent() {
     return <GameComponent sessionId={gameSessionId} />;
   }
 
+  const saveUsername = (e) => {
+    localStorage.setItem('username', username);
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="p-8 bg-white rounded-lg shadow-xl w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Welcome to Startup Hell</h1>
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        
-        <div className="space-y-6">
+            <input
+              type="text"
+              placeholder="Enter your name to begin"
+              className="w-full px-3 py-2 border rounded mb-2"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <button
+              onClick={() => saveUsername()}
+              type="submit"
+              className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+              disabled={isCreatingGame || isResumingGame}
+            >
+                Save
+            </button>
+        <div className="space-y-6 pt-4">
           <div>
             <button
               className="w-full px-4 py-2 text-white bg-black rounded hover:bg-black/90 transitiona-all duration-200 transition-colors"
