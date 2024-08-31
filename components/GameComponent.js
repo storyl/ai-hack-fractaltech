@@ -110,10 +110,10 @@ export default function GameComponent() {
       </form>
       <button
         onClick={() => speakText(gameText)}
-        className="mt-4 w-full px-4 py-2 text-white text-center flex flex-row items-center justify-center bg-blue-500 hover:bg-blue-600 transition-all duration-200 rounded focus:outline-none focus:ring-2 focus:ring-opacity-50"
+        className="mt-4 w-full px-4 py-2 text-black text-center flex flex-row items-center justify-center rounded"
         disabled={isSpeaking}
       >
-        {isSpeaking ? <AiFillSound /> : <span className='flex flex-row items-center space-x-1'><span>Play Audio:</span> <AiFillMuted /></span> }
+        {isSpeaking ? <AiFillSound size={24} /> : <span className='flex flex-row items-center space-x-1'><span>Play Audio:</span> <AiFillMuted size={24} /></span> }
       </button>
     </div>
   );
