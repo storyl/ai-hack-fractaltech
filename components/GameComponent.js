@@ -52,7 +52,7 @@ export default function GameComponent() {
       Previous game text: ${gameText}
       Player input: ${input}
       Respond with a humorous, slightly toxic continuation of the story based on the player's input.
-      Keep it around 150 words. Don't use quotation marks in your response.
+      Keep it around 150 or less words. Don't use quotation marks in your response.
     `;
 
     try {
