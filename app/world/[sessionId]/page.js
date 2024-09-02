@@ -52,6 +52,7 @@ export default function Page({ params }) {
     }
 
     if (data) {
+      console.log('Game state loaded:', data);
       setCurrentStage(data.current_stage || 0);
       setFullGameText(data.game_text || '');
       const parts = data.game_text.split('\n\n');

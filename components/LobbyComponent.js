@@ -42,12 +42,24 @@ export default function LobbyComponent() {
     const initialGameText = "Welcome to 'Startup Hell: Where Dreams Go to Die'! Ready to lose your sanity and maybe make a quick buck? Let's dive in!\n\nYou're sitting in your parents' basement, thinking you're the next Steve Jobs. What's your 'revolutionary' idea?";
     
     try {
+      const worldBuildResponse = await fetch('/api/world', {
+        method: 'POST'
+      });
+      if (!worldBuildResponse.ok) {
+        throw new Error('Failed to fetch world build');
+      }
+      const worldBuildData = await worldBuildResponse.json();
+      const { megacorps, tech_news, vc_funds } = worldBuildData;
+      console.log('World build data:', worldBuildData);
       const { data, error } = await supabase
         .from('game_sessions')
         .insert([
           { 
             current_stage: 0,
-            game_text: initialGameText
+            game_text: initialGameText,
+            megacorps,
+            tech_news,
+            vc_funds
           }
         ])
         .select();

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -30,23 +33,5 @@ export async function POST() {
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json({ error: 'An error occurred while processing your request.' }, { status: 500 });
-  }
-}
-
-export async function GET(request) {
-  // const body = await request.json();
-  // const { worldId } = body;
-  try {
-    const client = await client;
-    const db = client.db("ai-hack-v0");
-    const world = await db
-      .collection("worlds")
-      .findOne({ _id: '66d373daff54ad44bbdc25e2' });
-    return {
-      world: JSON.parse(JSON.stringify(world)),
-    };
-  } catch (e) {
-    console.error(e);
-    return { world: {} };
   }
 }
