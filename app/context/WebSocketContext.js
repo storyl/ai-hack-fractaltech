@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { io } from 'socket.io-client'
 
-const WebSocketContext = createContext(null)
+const connectedUsersWorlds = {};
+const WebSocketContext = createContext();
 
 export function WebSocketProvider({ children }) {
   const [socket, setSocket] = useState(null)
@@ -38,8 +39,16 @@ export function WebSocketProvider({ children }) {
   }
 
   return (
-    <WebSocketContext.Provider value={{ socket, username, connectWithUsername }}>
+    <WebSocketContext.Provider value={{ socket, connectWithUsername, username }}>
       {children}
     </WebSocketContext.Provider>
   )
 }
+
+export function useWebSocket() {
+    const context = useContext(WebSocketContext);
+    if (context === undefined) {
+      throw new Error('useWebSocket must be used within a WebSocketProvider');
+    }
+    return context;
+  }

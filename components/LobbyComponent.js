@@ -19,6 +19,14 @@ export default function LobbyComponent() {
   const [inputSessionId, setInputSessionId] = useState('');
   const [showGame, setShowGame] = useState(false);
   const router = useRouter();
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
 
   useEffect(() => {
     if (gameSessionId) {
@@ -97,7 +105,10 @@ export default function LobbyComponent() {
   }
 
   const saveUsername = (e) => {
+    e.preventDefault();
+    setIsUpdatingUsername(true);
     localStorage.setItem('username', username);
+    setTimeout(() => setIsUpdatingUsername(false), 1000); // Reset button after 1 second
   }
 
   return (
@@ -105,21 +116,22 @@ export default function LobbyComponent() {
       <div className="p-8 bg-white rounded-lg shadow-xl w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Welcome to Startup Hell</h1>
         {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-            <input
-              type="text"
-              placeholder="Enter your name to begin"
-              className="w-full px-3 py-2 border rounded mb-2"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <button
-              onClick={() => saveUsername()}
-              type="submit"
-              className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
-              disabled={isCreatingGame || isResumingGame}
-            >
-                Save
-            </button>
+        <form onSubmit={saveUsername} className="mb-4">
+          <input
+            type="text"
+            placeholder="Enter your name to begin"
+            className="w-full px-3 py-2 border rounded mb-2"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+            disabled={isCreatingGame || isResumingGame || isUpdatingUsername}
+          >
+            {isUpdatingUsername ? 'Updating...' : (username ? 'Update' : 'Save')}
+          </button>
+        </form>
         <div className="space-y-6 pt-4">
           <div>
             <button
