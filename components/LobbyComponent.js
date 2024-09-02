@@ -49,7 +49,7 @@ export default function LobbyComponent() {
         throw new Error('Failed to fetch world build');
       }
       const worldBuildData = await worldBuildResponse.json();
-      const { megacorps, tech_news, vc_funds } = worldBuildData;
+      const { megacorps, tech_news, vc_funds, town } = worldBuildData;
       console.log('World build data:', worldBuildData);
       const { data, error } = await supabase
         .from('game_sessions')
@@ -59,7 +59,8 @@ export default function LobbyComponent() {
             game_text: initialGameText,
             megacorps,
             tech_news,
-            vc_funds
+            vc_funds,
+            town
           }
         ])
         .select();
