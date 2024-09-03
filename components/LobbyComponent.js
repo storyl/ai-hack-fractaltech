@@ -58,7 +58,7 @@ export default function LobbyComponent() {
             current_stage: 0,
             game_text: initialGameText,
             megacorps,
-            tech_news,
+            technews: tech_news,
             vc_funds,
             town
           }
@@ -73,7 +73,6 @@ export default function LobbyComponent() {
       localStorage.setItem('gameSessionId', newSessionId);
       router.push(`/world/${newSessionId}`);
 
-    //   setShowGame(true);
     } catch (error) {
       console.error('Error creating new game:', error);
       setError('Failed to create a new game. Please try again.');
